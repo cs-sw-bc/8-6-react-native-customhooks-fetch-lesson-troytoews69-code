@@ -8,7 +8,12 @@ import { useState } from 'react';
 // ============================================================
 
 function useInput(initialValue) {
+	const [value, setValue] = useState(initialValue);
 
+	return {
+		value,
+		onChangeText: (text) => setValue(text),
+	};
 }
 
 export default useInput;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Image, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { CAT_API_KEY } from '../config/catApi';
 
 export default function CatFetcher() {
   const [cat, setCat] = useState(null);
@@ -19,7 +20,37 @@ export default function CatFetcher() {
   // Catch any errors and store in error state.
   // ============================================================
   const fetchCat = async () => {
+    setLoading(true);
+    setError(null);
 
+    try {
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'x-api-key': CAT_API_KEY,
+      });
+
+      const requestOptions = {
+        method: 'GET',
+        headers,
+        redirect: 'follow',
+      };
+
+      const response = await fetch(
+        'https://api.thecatapi.com/v1/images/search?size=med&mime_types=jpg&format=json&has_breeds=true&order=RANDOM&page=0&limit=1',
+        requestOptions
+      );
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const json = await response.json();
+      setCat(json[0] ?? null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ============================================================
@@ -34,11 +65,15 @@ export default function CatFetcher() {
     <View style={styles.container}>
       <Text style={styles.heading}>Random Cat 🐱</Text>
 
-      {/* TODO 4: render loading, error, or image here */}
+      {loading && <ActivityIndicator size="large" style={{ marginBottom: 12 }} />}
+      {!loading && error && <Text style={styles.error}>Error: {error}</Text>}
+      {!loading && !error && cat?.url && (
+        <Image source={{ uri: cat.url }} style={styles.image} resizeMode="cover" />
+      )}
 
       <Text style={styles.id}>ID: {cat?.id}</Text>
 
-      {/* TODO 5: Add a Button that calls fetchCat to load a new cat */}
+      <Button title="Load New Cat" onPress={fetchCat} />
 
     </View>
   );
